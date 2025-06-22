@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handwritten Digit Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .digit-selector {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .digit-selector h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .digit-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .digit-btn {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+
+        .digit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-color: #667eea;
+        }
+
+        .digit-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .results {
+            margin-top: 40px;
+        }
+
+        .results h3 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+
+        .image-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .image-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .generated-image {
+            width: 140px;
+            height: 140px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            image-rendering: pixelated;
+            background: white;
+        }
+
+        .image-label {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .info {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2196f3;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .digit-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+            
+            .image-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            
+            .generated-image {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Handwritten Digit Generator</h1>
+            <p>Generate realistic handwritten digits in MNIST format</p>
+        </div>
+        
+        <div class="content">
+            <div class="info">
+                <strong>How it works:</strong> Select a digit (0-9) and click generate to create 5 unique handwritten versions. Each image is 28×28 pixels, just like the famous MNIST dataset used in machine learning!
+            </div>
+            
+            <div class="digit-selector">
+                <h2>Select a digit to generate:</h2>
+                <div class="digit-buttons">
+                    <button class="digit-btn" onclick="selectDigit(0)">0</button>
+                    <button class="digit-btn" onclick="selectDigit(1)">1</button>
+                    <button class="digit-btn" onclick="selectDigit(2)">2</button>
+                    <button class="digit-btn" onclick="selectDigit(3)">3</button>
+                    <button class="digit-btn" onclick="selectDigit(4)">4</button>
+                    <button class="digit-btn" onclick="selectDigit(5)">5</button>
+                    <button class="digit-btn" onclick="selectDigit(6)">6</button>
+                    <button class="digit-btn" onclick="selectDigit(7)">7</button>
+                    <button class="digit-btn" onclick="selectDigit(8)">8</button>
+                    <button class="digit-btn" onclick="selectDigit(9)">9</button>
+                </div>
+                <button class="generate-btn" onclick="generateDigits()" disabled id="generateBtn">
+                    Generate 5 Images
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Generating handwritten digits...</p>
+            </div>
+            
+            <div class="error" id="error"></div>
+            
+            <div class="results" id="results" style="display: none;">
+                <h3 id="resultsTitle">Generated Images of Digit X</h3>
+                <div class="image-grid" id="imageGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedDigit = null;
+
+        function selectDigit(digit) {
+            selectedDigit = digit;
+            
+            // Update button states
+            document.querySelectorAll('.digit-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Enable generate button
+            document.getElementById('generateBtn').disabled = false;
+        }
+
+        async function generateDigits() {
+            if (selectedDigit === null) return;
+
+            // Show loading, hide results and errors
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('generateBtn').disabled = true;
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ digit: selectedDigit })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data.digit, data.images);
+                } else {
+                    showError(data.error || 'An error occurred while generating images');
+                }
+            } catch (error) {
+                showError('Failed to connect to the server. Please try again.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+
+        function displayResults(digit, images) {
+            const resultsDiv = document.getElementById('results');
+            const titleElement = document.getElementById('resultsTitle');
+            const imageGrid = document.getElementById('imageGrid');
+
+            titleElement.textContent = `Generated Images of Digit ${digit}`;
+            
+            // Clear previous images
+            imageGrid.innerHTML = '';
+
+            // Add new images
+            images.forEach((imgSrc, index) => {
+                const container = document.createElement('div');
+                container.className = 'image-container';
+                
+                const img = document.createElement('img');
+                img.src = imgSrc;
+                img.className = 'generated-image';
+                img.alt = `Generated digit ${digit} - Variation ${index + 1}`;
+                
+                const label = document.createElement('div');
+                label.className = 'image-label';
+                label.textContent = `Variation ${index + 1}`;
+                
+                container.appendChild(img);
+                container.appendChild(label);
+                imageGrid.appendChild(container);
+            });
+
+            resultsDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Initialize with digit 5 selected
+        document.addEventListener('DOMContentLoaded', function() {
+            selectDigit(5);
+            document.querySelectorAll('.digit-btn')[5].classList.add('active');
+        });
+    </script>
+</body>
+</html> 
